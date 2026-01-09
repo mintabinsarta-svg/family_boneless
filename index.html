@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Pro v15.6 - Cloud Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        .input-modern { width: 100%; border: 2px solid #e2e8f0 !important; padding: 12px; border-radius: 12px; font-weight: 700; outline: none; transition: 0.2s; }
+        .input-modern:focus { border-color: #2563eb !important; background-color: #fff; }
+        .nav-link.active { background-color: #2563eb; color: white !important; }
+        .grid-kasir { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        @media print { .no-print { display: none !important; } main { margin-left: 0 !important; } }
+    </style>
+</head>
+<body>
+
+    <div id="loginPage" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900">
+        <div class="bg-white p-8 rounded-[40px] shadow-2xl w-full max-w-md text-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <i class="fas fa-lock text-white text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2 italic uppercase">Family Pro</h2>
+            <p class="text-slate-400 text-sm mb-8 font-bold italic underline">Cloud Sync v15.6</p>
+            <div class="space-y-4 text-left">
+                <label class="text-[10px] font-black text-slate-400 ml-2 uppercase">Username</label>
+                <input type="text" id="userLogin" class="input-modern" placeholder="admin">
+                <label class="text-[10px] font-black text-slate-400 ml-2 uppercase">Password</label>
+                <input type="password" id="passLogin" class="input-modern" placeholder="••••••••">
+                <button onclick="cekLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase hover:bg-blue-700 transition shadow-lg">Masuk ke Sistem</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainApp" class="hidden min-h-screen flex">
+        <aside class="w-64 bg-slate-900 text-white flex flex-col fixed h-full z-50 no-print">
+            <div class="p-6 text-center border-b border-slate-800">
+                <h1 class="text-xl font-black text-blue-400 italic">FAMILY PRO</h1>
+                <p id="userLogged" class="text-[9px] text-emerald-400 font-bold uppercase mt-1 tracking-widest"></p>
+            </div>
+            <nav class="flex-1 px-4 mt-4 space-y-1 overflow-y-auto">
+                <button onclick="navigasi('dashboard', this)" class="nav-link active w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition"><i class="fas fa-th-large"></i> Dashboard</button>
+                <button onclick="navigasi('pembelian', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-truck"></i> Ayam Datang</button>
+                <button onclick="navigasi('penjualan', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-cash-register"></i> Kasir Jual</button>
+                <button onclick="navigasi('stok', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-boxes"></i> Stok Barang</button>
+                <button onclick="navigasi('piutang', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-hand-holding-usd"></i> Piutang</button>
+                <button onclick="navigasi('biaya', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-wallet text-rose-400"></i> Biaya Ops</button>
+                <button onclick="navigasi('laporan', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-slate-400"><i class="fas fa-file-contract"></i> Laporan Keuangan</button>
+                <button onclick="navigasi('pengaturan', this)" class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-yellow-500 bg-yellow-500/10 mt-4"><i class="fas fa-cog"></i> Atur Harga</button>
+                <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-rose-500 mt-10 hover:bg-rose-500/10"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+            <header class="bg-white py-4 px-8 shadow-sm flex justify-between items-center border-b no-print">
+                <div id="pageTitle" class="text-lg font-black text-slate-800 uppercase italic">Dashboard</div>
+                <div id="clock" class="font-mono font-bold text-blue-600 bg-blue-50 px-4 py-1 rounded-full text-sm"></div>
+            </header>
+
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-50">
+                
+                <div id="page-dashboard" class="page-content space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-sm">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Laba Bulan Ini</p>
+                            <h2 id="viewLaba" class="text-2xl font-black text-blue-600">Rp 0</h2>
+                        </div>
+                        <div class="bg-emerald-500 p-5 rounded-3xl text-white shadow-lg">
+                            <p class="text-[10px] font-black text-emerald-100 uppercase">Kas Tunai</p>
+                            <h2 id="viewKas" class="text-2xl font-black">Rp 0</h2>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl border-2 border-slate-200">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Total Piutang</p>
+                            <h2 id="viewPiutangTotal" class="text-2xl font-black text-rose-500">Rp 0</h2>
+                        </div>
+                        <div class="bg-slate-900 p-5 rounded-3xl text-white shadow-lg">
+                            <p class="text-[10px] font-black text-blue-300 uppercase">Stok Ayam Hidup</p>
+                            <h2 id="viewStokHidup" class="text-2xl font-black">0 Ekor</h2>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-[32px] border-2 border-slate-200"><canvas id="chartKeuangan"></canvas></div>
+                        <div class="bg-white p-6 rounded-[32px] border-2 border-slate-200">
+                            <h3 class="font-black italic text-slate-700 mb-4 uppercase text-xs">Aktivitas Cloud Terakhir</h3>
+                            <div id="cloudLog" class="text-[10px] space-y-1 font-mono text-slate-500">Menunggu transaksi...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-pembelian" class="page-content hidden max-w-xl mx-auto">
+                    <div class="bg-white p-8 rounded-[40px] border-2 shadow-sm">
+                        <h2 class="text-xl font-black mb-6 italic uppercase">Input Ayam Hidup Datang</h2>
+                        <div class="space-y-4">
+                            <input type="text" id="b_supplier" class="input-modern" placeholder="Nama Supplier">
+                            <div class="grid grid-cols-2 gap-4">
+                                <input type="number" id="b_ekor" class="input-modern" placeholder="Jumlah Ekor">
+                                <input type="number" id="b_kg" class="input-modern" placeholder="Total Berat (Kg)">
+                            </div>
+                            <input type="number" id="b_harga" class="input-modern" placeholder="Harga Beli Per Kg">
+                            <button onclick="simpanPembelian()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase shadow-xl hover:bg-black transition">Simpan & Update Stok</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-penjualan" class="page-content hidden flex flex-col lg:flex-row gap-6">
+                    <div class="flex-1 space-y-4">
+                        <div class="bg-white p-6 rounded-3xl border-2 border-slate-200">
+                            <h3 class="font-black mb-4 italic text-slate-400 uppercase text-xs">Pilih Produk</h3>
+                            <div id="produkGrid" class="grid-kasir"></div>
+                        </div>
+                        <div class="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-sm">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 font-black text-[10px] text-slate-500 uppercase">
+                                    <tr><th class="p-4 text-left">Item</th><th class="p-4 text-center">Qty</th><th class="p-4 text-right">Subtotal</th><th class="p-4"></th></tr>
+                                </thead>
+                                <tbody id="keranjangTable" class="font-bold text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="w-full lg:w-80 bg-slate-900 p-6 rounded-[32px] text-white flex flex-col gap-4 shadow-2xl h-fit">
+                        <div id="grandTotal" class="text-4xl font-black text-center py-2 text-blue-400">Rp 0</div>
+                        <input type="text" id="j_cust" class="bg-slate-800 p-3 rounded-xl font-bold w-full text-white" placeholder="Nama Pelanggan">
+                        <select id="j_metode" class="bg-slate-800 p-3 rounded-xl font-bold w-full text-white">
+                            <option value="TUNAI">TUNAI</option>
+                            <option value="TRANSFER">TRANSFER</option>
+                            <option value="TEMPO">TEMPO</option>
+                        </select>
+                        <div class="border-t border-slate-700 pt-4 mt-2">
+                            <p class="text-[9px] text-slate-500 mb-2 font-black uppercase">Potong Stok Ayam Hidup</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="j_potong_e" class="bg-slate-800 p-2 rounded-lg text-xs" placeholder="Ekor">
+                                <input type="number" id="j_potong_k" class="bg-slate-800 p-2 rounded-lg text-xs" placeholder="Kg">
+                            </div>
+                        </div>
+                        <button onclick="prosesPenjualan()" class="w-full bg-blue-600 py-4 rounded-2xl font-black uppercase mt-4 shadow-lg hover:bg-blue-500 transition">Bayar & Kirim Cloud</button>
+                    </div>
+                </div>
+
+                <div id="page-stok" class="page-content hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-[32px] border-2 border-slate-200">
+                            <h3 class="font-black mb-4 italic text-blue-600 uppercase text-xs">Gudang Bahan Baku</h3>
+                            <div class="flex justify-between bg-blue-50 p-4 rounded-2xl mb-4 text-blue-900">
+                                <div><p class="text-[10px] font-black uppercase">Ekor</p><h2 id="s_ekor" class="text-2xl font-black">0</h2></div>
+                                <div><p class="text-[10px] font-black uppercase">Kilogram</p><h2 id="s_kg" class="text-2xl font-black">0</h2></div>
+                            </div>
+                            <div class="border-t border-dashed pt-4">
+                                <p class="text-[10px] font-black text-slate-400 mb-2 uppercase">Input Proses Potong</p>
+                                <div class="flex gap-2">
+                                    <input type="number" id="potong_ekor" class="input-modern flex-1" placeholder="Jml Ekor Diproses">
+                                    <button onclick="prosesPotong()" class="bg-rose-500 text-white px-6 rounded-xl font-black text-xs uppercase">Potong</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-[32px] border-2 border-slate-200">
+                            <h3 class="font-black mb-4 italic text-emerald-600 uppercase text-xs">Stok Produk Jadi</h3>
+                            <div class="space-y-3">
+                                <select id="sl_nama" class="input-modern"></select>
+                                <div class="flex gap-2">
+                                    <input type="number" id="sl_jumlah" class="input-modern flex-1" placeholder="Berat Hasil">
+                                    <button onclick="tambahStokOlahan()" class="bg-emerald-500 text-white px-6 rounded-xl font-black text-xs uppercase">Update</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden shadow-sm">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 font-black text-[10px] text-slate-400 uppercase">
+                                <tr><th class="p-4 text-left">Produk</th><th class="p-4 text-center">Persediaan</th><th class="p-4 text-right">Harga Jual</th></tr>
+                            </thead>
+                            <tbody id="stokTabel" class="font-bold text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-piutang" class="page-content hidden">
+                    <div class="bg-white rounded-3xl border-2 border-slate-200 overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 font-black text-[10px] text-slate-500 uppercase">
+                                <tr><th class="p-5">Nama Pelanggan</th><th class="p-5 text-center">Tgl Pinjam</th><th class="p-5 text-right">Jumlah Piutang</th><th class="p-5 text-center">Aksi</th></tr>
+                            </thead>
+                            <tbody id="piutangTabel" class="font-bold text-sm text-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-biaya" class="page-content hidden max-w-xl mx-auto bg-white p-8 rounded-[40px] border-2">
+                    <h2 class="text-xl font-black mb-6 italic uppercase text-center">Input Pengeluaran Kas</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="exp_nama" class="input-modern" placeholder="Keterangan Pengeluaran">
+                        <input type="number" id="exp_nilai" class="input-modern" placeholder="Nilai Rupiah">
+                        <button onclick="tambahBiaya()" class="w-full bg-rose-500 text-white py-4 rounded-2xl font-black uppercase">Simpan & Sync Cloud</button>
+                    </div>
+                </div>
+
+                <div id="page-laporan" class="page-content hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-3xl border-2">
+                            <h3 class="font-black mb-4 border-b pb-2 italic uppercase text-slate-400">Neraca Kas</h3>
+                            <div class="space-y-3 font-bold text-sm">
+                                <div class="flex justify-between"><span>Kas di Tangan</span><span id="n_kas">Rp 0</span></div>
+                                <div class="flex justify-between"><span>Aset Ayam Hidup</span><span id="n_stok_h">Rp 0</span></div>
+                                <div class="flex justify-between text-rose-500"><span>Piutang Aktif</span><span id="n_piutang">Rp 0</span></div>
+                                <hr class="border-dashed">
+                                <div class="flex justify-between text-lg font-black italic"><span>Total Aset</span><span id="n_aset">Rp 0</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+                            <h3 class="font-black mb-4 border-b border-slate-700 pb-2 italic uppercase text-blue-400">Laba Rugi</h3>
+                            <div class="space-y-3 text-sm font-bold">
+                                <div class="flex justify-between"><span>Omset Penjualan</span><span id="lr_jual" class="text-blue-400">Rp 0</span></div>
+                                <div class="flex justify-between text-rose-400"><span>HPP (Beli Ayam)</span><span id="lr_beli">-Rp 0</span></div>
+                                <div class="flex justify-between text-rose-400"><span>Beban Operasional</span><span id="lr_biaya">-Rp 0</span></div>
+                                <hr class="border-slate-700">
+                                <div class="flex justify-between text-lg font-black text-emerald-400"><span>LABA BERSIH</span><span id="lr_total">Rp 0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="page-pengaturan" class="page-content hidden">
+                    <div class="bg-white p-8 rounded-[40px] border-2">
+                        <h2 class="text-xl font-black mb-6 italic uppercase">Pengaturan Harga Jual Produk</h2>
+                        <div id="hargaGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                        <button onclick="simpanHarga()" class="mt-8 bg-emerald-500 text-white px-10 py-4 rounded-2xl font-black uppercase w-full shadow-lg">Terapkan Semua Harga Baru</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="notaPdf" class="bg-white p-8 w-[300px] text-black absolute -left-[9999px]" style="font-family: monospace;">
+        <center><h2 style="font-weight: 900; margin-bottom: 0;">FAMILY BONELESS</h2><p>Struk Penjualan</p><p>=============================</p></center>
+        <div style="font-size: 11px;"><p>Tgl: <span id="n_tgl"></span></p><p>Customer: <span id="n_cust"></span></p>
+        <table style="width: 100%; border-bottom: 1px dashed black;"><tbody id="n_item"></tbody></table>
+        <h3 style="text-align: right; margin-top: 10px;">TOTAL: <span id="n_total"></span></h3></div>
+        <center><p style="margin-top: 20px;">~ Terima Kasih ~</p></center>
+    </div>
+
+    <script>
+        // === CONFIGURASI CLOUD & LOGIN ===
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGZd4ZlgyPxzNbd_e5-y6qisZIww4EhwPZ6v2PiSrfK0nQlxt6oZ8MVsZRcBP44kFn/exec";
+        const LOGIN_DATA = { user: "admin", pass: "familyboneless" };
+
+        // === DATA MASTER ===
+        const products = ["Karkas", "Filet Dada Polos", "Filet Dada Kulit", "Filet Paha Polos", "Filet Paha Kulit", "Paha Pentung", "Paha Utuh", "Paha Atas", "Sayap", "Ceker", "Kulit", "Kerongkongan", "Tulang", "Tulang I", "Kepala", "Usus", "Ati Ampela", "MDM", "Lemak", "Sayap R", "Ayam Utuh", "Trimming Dada", "Trimming Paha", "Daging Giling"];
+
+        let dbProduk = {}; products.forEach(p => { dbProduk[p] = { harga: 0, stok: 0 }; });
+        let sEkor = 0, sKg = 0, hBeli = 0, tJual = 0, tBiaya = 0, tBeli = 0, kas = 0;
+        let keranjang = [], piutangData = [], arsipBulan = [];
+        let chartObj;
+
+        // === FUNGSI CLOUD SYNC ===
+        function syncCloud(tipe, sub, met, val) {
+            if(!SCRIPT_URL) return;
+            const logBox = document.getElementById('cloudLog');
+            logBox.innerHTML = `[${new Date().toLocaleTimeString()}] Mengirim data ke Sheet...<br>` + logBox.innerHTML;
+            
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipe, sub, met, val })
+            })
+            .then(() => {
+                logBox.innerHTML = `<span class="text-emerald-500">[OK] ${tipe} Berhasil sinkron!</span><br>` + logBox.innerHTML;
+            })
+            .catch(err => {
+                logBox.innerHTML = `<span class="text-rose-500">[ERROR] Gagal sinkron ke Sheets!</span><br>` + logBox.innerHTML;
+            });
+        }
+
+        // === AUTH & NAVIGASI ===
+        function cekLogin() {
+            const u = document.getElementById('userLogin').value;
+            const p = document.getElementById('passLogin').value;
+            if(u === LOGIN_DATA.user && p === LOGIN_DATA.pass) {
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('userLogged').innerText = "Aktif: " + u;
+                localStorage.setItem('fb_session', 'active');
+                initApp();
+            } else { alert("User/Password Salah!"); }
+        }
+
+        function logout() {
+            if(confirm("Keluar aplikasi?")) {
+                localStorage.removeItem('fb_session');
+                location.reload();
+            }
+        }
+
+        function navigasi(id, btn) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + id).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active', 'text-white'));
+            btn.classList.add('active', 'text-white');
+            document.getElementById('pageTitle').innerText = btn.innerText;
+            if(id === 'penjualan') renderKasir();
+            if(id === 'pengaturan') renderHargaGrid();
+            if(id === 'stok') { renderStokTabel(); renderStokDropdown(); }
+            if(id === 'piutang') renderPiutang();
+            updateDashboard();
+        }
+
+        // === LOGIKA AYAM DATANG ===
+        function simpanPembelian() {
+            const e = parseFloat(document.getElementById('b_ekor').value) || 0;
+            const k = parseFloat(document.getElementById('b_kg').value) || 0;
+            const h = parseFloat(document.getElementById('b_harga').value) || 0;
+            const s = document.getElementById('b_supplier').value || "Supplier";
+            if(e && k && h) {
+                const totalBeli = k * h;
+                sEkor += e; sKg += k; hBeli = h; tBeli += totalBeli; kas -= totalBeli;
+                
+                syncCloud("BELI_AYAM", s, "TUNAI", totalBeli); // Kirim Cloud
+                clearForm(['b_ekor', 'b_kg', 'b_harga', 'b_supplier']);
+                updateDashboard(); alert("Ayam Datang Tercatat!");
+            }
+        }
+
+        // === LOGIKA KASIR ===
+        function renderKasir() {
+            const grid = document.getElementById('produkGrid'); grid.innerHTML = "";
+            for (let name in dbProduk) {
+                if(dbProduk[name].harga > 0) {
+                    grid.innerHTML += `<button onclick="tambahItem('${name}')" class="bg-white border-2 border-slate-200 p-3 rounded-2xl hover:border-blue-500 transition text-left group">
+                        <p class="text-[9px] font-black text-slate-400 group-hover:text-blue-500 uppercase">${name}</p>
+                        <p class="text-sm font-black text-slate-800">Rp ${dbProduk[name].harga.toLocaleString()}</p>
+                    </button>`;
+                }
+            }
+        }
+
+        function tambahItem(name) {
+            const q = prompt(`Masukkan Berat/Qty ${name}:`, 1);
+            if(q) {
+                const sub = parseFloat(q) * dbProduk[name].harga;
+                keranjang.push({ name, p: dbProduk[name].harga, q: parseFloat(q), sub });
+                renderKeranjang();
+            }
+        }
+
+        function renderKeranjang() {
+            const tb = document.getElementById('keranjangTable'); tb.innerHTML = "";
+            let total = 0;
+            keranjang.forEach((i, idx) => {
+                tb.innerHTML += `<tr class="border-b"><td class="p-4">${i.name}</td><td class="text-center">${i.q}</td><td class="text-right">Rp ${i.sub.toLocaleString()}</td><td class="text-center"><button onclick="hapusK(${idx})" class="text-rose-500"><i class="fas fa-trash"></i></button></td></tr>`;
+                total += i.sub;
+            });
+            document.getElementById('grandTotal').innerText = "Rp " + total.toLocaleString();
+        }
+
+        function hapusK(idx) { keranjang.splice(idx,1); renderKeranjang(); }
+
+        async function prosesPenjualan() {
+            const total = keranjang.reduce((a,b)=>a+b.sub, 0);
+            const m = document.getElementById('j_metode').value;
+            const c = document.getElementById('j_cust').value || "Umum";
+            const pe = parseFloat(document.getElementById('j_potong_e').value) || 0;
+            const pk = parseFloat(document.getElementById('j_potong_k').value) || 0;
+
+            if(total === 0) return alert("Pilih produk!");
+            if(pe > sEkor) return alert("Stok Bahan tidak cukup!");
+
+            tJual += total; sEkor -= pe; sKg -= pk;
+            keranjang.forEach(item => { dbProduk[item.name].stok -= item.q; });
+
+            if(m === "TEMPO") piutangData.push({ cust: c, tgl: new Date().toLocaleDateString(), val: total });
+            else kas += total;
+
+            syncCloud("PENJUALAN", c, m, total); // Kirim Cloud
+
+            // NOTA
+            document.getElementById('n_cust').innerText = c;
+            document.getElementById('n_tgl').innerText = new Date().toLocaleString();
+            document.getElementById('n_total').innerText = "Rp " + total.toLocaleString();
+            const ni = document.getElementById('n_item'); ni.innerHTML = "";
+            keranjang.forEach(i => { ni.innerHTML += `<tr><td>${i.name}</td><td align="right">${i.q}x${i.p.toLocaleString()}</td></tr>`; });
+            const canvas = await html2canvas(document.getElementById('notaPdf'), { scale: 3 });
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p','mm',[80, 150]);
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 80, 120);
+            pdf.save(`Nota_${c}.pdf`);
+
+            keranjang = []; 
+            clearForm(['j_cust', 'j_potong_e', 'j_potong_k']);
+            renderKeranjang(); updateDashboard(); alert("Transaksi Berhasil!");
+        }
+
+        // === MANAJEMEN STOK ===
+        function renderStokDropdown() {
+            const sel = document.getElementById('sl_nama'); sel.innerHTML = "";
+            products.forEach(p => { sel.innerHTML += `<option value="${p}">${p}</option>`; });
+        }
+        function renderStokTabel() {
+            const tb = document.getElementById('stokTabel'); tb.innerHTML = "";
+            document.getElementById('s_ekor').innerText = sEkor;
+            document.getElementById('s_kg').innerText = sKg;
+            for(let name in dbProduk) {
+                tb.innerHTML += `<tr class="border-b"><td class="p-4 text-slate-700">${name}</td><td class="p-4 text-center ${dbProduk[name].stok < 5 ? 'text-rose-500':'text-emerald-600'}">${dbProduk[name].stok}</td><td class="p-4 text-right text-slate-400">Rp ${dbProduk[name].harga.toLocaleString()}</td></tr>`;
+            }
+        }
+        function tambahStokOlahan() {
+            const name = document.getElementById('sl_nama').value;
+            const q = parseFloat(document.getElementById('sl_jumlah').value) || 0;
+            if(q > 0) { 
+                dbProduk[name].stok += q; 
+                renderStokTabel(); clearForm(['sl_jumlah']); alert("Stok Diupdate!"); 
+            }
+        }
+        function prosesPotong() {
+            const e = parseFloat(document.getElementById('potong_ekor').value) || 0;
+            if(e > sEkor) return alert("Stok Bahan baku kurang!");
+            sEkor -= e; renderStokTabel(); clearForm(['potong_ekor']); updateDashboard();
+        }
+
+        // === PIUTANG & BIAYA ===
+        function renderPiutang() {
+            const tb = document.getElementById('piutangTabel'); tb.innerHTML = "";
+            piutangData.forEach((p, idx) => {
+                tb.innerHTML += `<tr class="border-b"><td class="p-5">${p.cust}</td><td class="p-5 text-center">${p.tgl}</td><td class="p-5 text-right text-rose-600">Rp ${p.val.toLocaleString()}</td><td class="p-5 text-center"><button onclick="lunasiP(${idx})" class="bg-emerald-500 text-white px-4 py-1 rounded-lg text-xs font-black">LUNAS</button></td></tr>`;
+            });
+        }
+        function lunasiP(idx) {
+            const val = piutangData[idx].val;
+            const cust = piutangData[idx].cust;
+            kas += val;
+            syncCloud("LUNAS_PIUTANG", cust, "TUNAI", val); // Kirim Cloud
+            piutangData.splice(idx,1); renderPiutang(); updateDashboard();
+        }
+        function tambahBiaya() {
+            const n = document.getElementById('exp_nama').value;
+            const v = parseFloat(document.getElementById('exp_nilai').value) || 0;
+            if(n && v) { 
+                tBiaya += v; kas -= v; 
+                syncCloud("BIAYA_OPS", n, "TUNAI", v); // Kirim Cloud
+                clearForm(['exp_nama', 'exp_nilai']); updateDashboard(); alert("Biaya Disimpan!"); 
+            }
+        }
+
+        // === MASTER HARGA ===
+        function renderHargaGrid() {
+            const grid = document.getElementById('hargaGrid'); grid.innerHTML = "";
+            for(let name in dbProduk) {
+                grid.innerHTML += `<div class="bg-slate-50 p-3 rounded-xl border">
+                    <p class="text-[9px] font-black text-slate-400 mb-1 uppercase">${name}</p>
+                    <input type="number" value="${dbProduk[name].harga}" data-name="${name}" class="h-input w-full bg-white border p-2 rounded-lg font-bold text-sm">
+                </div>`;
+            }
+        }
+        function simpanHarga() {
+            document.querySelectorAll('.h-input').forEach(i => { dbProduk[i.getAttribute('data-name')].harga = parseFloat(i.value) || 0; });
+            alert("Harga Master Berhasil Diperbarui!"); saveLocal();
+        }
+
+        // === CORE DASHBOARD ===
+        function updateDashboard() {
+            const laba = tJual - tBeli - tBiaya;
+            const piTotal = piutangData.reduce((a,b)=>a+b.val, 0);
+            document.getElementById('viewLaba').innerText = "Rp " + laba.toLocaleString();
+            document.getElementById('viewKas').innerText = "Rp " + kas.toLocaleString();
+            document.getElementById('viewPiutangTotal').innerText = "Rp " + piTotal.toLocaleString();
+            document.getElementById('viewStokHidup').innerText = sEkor + " Ekor";
+
+            document.getElementById('n_kas').innerText = "Rp " + kas.toLocaleString();
+            document.getElementById('n_stok_h').innerText = "Rp " + (sKg * hBeli).toLocaleString();
+            document.getElementById('n_piutang').innerText = "Rp " + piTotal.toLocaleString();
+            document.getElementById('n_aset').innerText = "Rp " + (kas + (sKg * hBeli) + piTotal).toLocaleString();
+            
+            document.getElementById('lr_jual').innerText = "Rp " + tJual.toLocaleString();
+            document.getElementById('lr_beli').innerText = "-Rp " + tBeli.toLocaleString();
+            document.getElementById('lr_biaya').innerText = "-Rp " + tBiaya.toLocaleString();
+            document.getElementById('lr_total').innerText = "Rp " + laba.toLocaleString();
+
+            if(chartObj) chartObj.destroy();
+            const ctx = document.getElementById('chartKeuangan').getContext('2d');
+            chartObj = new Chart(ctx, {
+                type: 'bar',
+                data: { labels:['Jual','Beli','Biaya'], datasets:[{data:[tJual,tBeli,tBiaya], backgroundColor:['#3b82f6','#f59e0b','#ef4444'], borderRadius:8}] },
+                options: { plugins: { legend: { display:false } } }
+            });
+            saveLocal();
+        }
+
+        function clearForm(ids) { ids.forEach(id => document.getElementById(id).value = ""); }
+        function saveLocal() {
+            const d = { sEkor, sKg, hBeli, tJual, tBiaya, tBeli, kas, piutangData, dbProduk };
+            localStorage.setItem('family_v15_db', JSON.stringify(d));
+        }
+
+        function initApp() {
+            const saved = localStorage.getItem('family_v15_db');
+            if(saved) {
+                const d = JSON.parse(saved);
+                sEkor=d.sEkor; sKg=d.sKg; hBeli=d.hBeli; tJual=d.tJual; tBiaya=d.tBiaya; tBeli=d.tBeli;
+                kas=d.kas; piutangData=d.piutangData||[]; dbProduk=d.dbProduk;
+                updateDashboard();
+            }
+            setInterval(()=> { document.getElementById('clock').innerText = new Date().toLocaleString('id-ID'); }, 1000);
+        }
+
+        window.onload = () => { if(localStorage.getItem('fb_session') === 'active') cekLogin(); };
+    </script>
+</body>
+</html>
